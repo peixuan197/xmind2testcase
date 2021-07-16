@@ -47,15 +47,16 @@ class TestSuite(object):
 
 class TestCase(object):
 
-    def __init__(self, name='', version=1, summary='', preconditions='', execution_type=1, importance=2, estimated_exec_duration=3, status=7, result=0, steps=None):
+    def __init__(self, name='', version=1, summary='', preconditions='', execution_type=1, importance=2,
+                 estimated_exec_duration=3, status=7, result=0, steps=None, remark=''):
         """
         TestCase
         :param name: test case name
         :param version: test case version infomation
         :param summary: test case summary infomation
         :param preconditions: test case pre condition
-        :param execution_type: manual:1 or automate:2
-        :param importance: high:1, middle:2, low:3
+        :param execution_type: manual:1 or automate:2 手工or自动化
+        :param importance: high:0, middle:1, low:2 优先级
         :param estimated_exec_duration: estimated execution duration
         :param status: draft:1, ready ro review:2, review in progress:3, rework:4, obsolete:5, future:6, final:7
         :param result: non-execution:0, pass:1, failed:2, blocked:3, skipped:4
@@ -71,6 +72,7 @@ class TestCase(object):
         self.status = status
         self.result = result
         self.steps = steps
+        self.remark = remark
 
     def to_dict(self):
         data = {
@@ -83,7 +85,8 @@ class TestCase(object):
             'estimated_exec_duration': self.estimated_exec_duration,  # TODO(devin): get estimated content
             'status': self.status,  # TODO(devin): get status content
             'result': self.result,
-            'steps': []
+            'steps': [],
+            'remark': self.remark
         }
 
         if self.steps:
@@ -95,7 +98,7 @@ class TestCase(object):
 
 class TestStep(object):
 
-    def __init__(self, step_number=1, actions='', expectedresults='', execution_type=1, result=0):
+    def __init__(self, step_number=1, actions='', expectedresults='', execution_type=1, result=0, remark=''):
         """
         TestStep
         :param step_number: test step number
@@ -103,12 +106,14 @@ class TestStep(object):
         :param expectedresults: test step expected results
         :param execution_type: test step execution type
         :param result: non-execution:0, pass:1, failed:2, blocked:3, skipped:4
+        :param remark: test case remark message
         """
         self.step_number = step_number
         self.actions = actions
         self.expectedresults = expectedresults
         self.execution_type = execution_type  # TODO(devin): get execution type content
         self.result = result
+        self.remark = remark
 
     def to_dict(self):
         data = {
@@ -116,7 +121,8 @@ class TestStep(object):
             'actions': self.actions,
             'expectedresults': self.expectedresults,
             'execution_type': self.execution_type,
-            'result': self.result
+            'result': self.result,
+            'remark': self.remark
         }
 
         return data

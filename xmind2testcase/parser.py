@@ -83,6 +83,7 @@ def sheet_to_suite(root_topic):
 def parse_testsuite(suite_dict):
     testsuite = TestSuite()
     testsuite.name = suite_dict['title']
+    # xmind无法获取note字段
     testsuite.details = suite_dict['note']
     testsuite.testcase_list = []
     logging.debug('start to parse a testsuite: %s', testsuite.name)
@@ -114,8 +115,11 @@ def recurse_parse_testcase(case_dict, parent=None):
 
 def is_testcase_topic(case_dict):
     """A topic with a priority marker, or no subtopic, indicates that it is a testcase"""
-    priority = get_priority(case_dict)
-    if priority:
+    # priority = get_priority(case_dict)
+    # if priority:
+    #     return True
+    priority = get_priority_for_tapd(case_dict)
+    if priority != -1:
         return True
 
     children = case_dict.get('topics', [])
@@ -137,11 +141,15 @@ def parse_a_testcase(case_dict, parent):
     summary = gen_testcase_summary(topics)
     testcase.summary = summary if summary else testcase.name
     testcase.execution_type = get_execution_type(topics)
-    testcase.importance = get_priority(case_dict) or 2
+    testcase.importance = get_priority(case_dict) or 1
 
     step_dict_list = case_dict.get('topics', [])
     if step_dict_list:
-        testcase.steps = parse_test_steps(step_dict_list)
+        fist_step = step_dict_list[0]
+        if 'R|' in fist_step['title']:
+            testcase.remark = fist_step['title'].split('|')[-1]
+        else:
+            testcase.steps = parse_test_steps(step_dict_list)
 
     # the result of the testcase take precedence over the result of the teststep
     testcase.result = get_test_result(case_dict['markers'])
@@ -177,10 +185,38 @@ def get_execution_type(topics):
 
 def get_priority(case_dict):
     """Get the topic's priority（equivalent to the importance of the testcase)"""
-    if isinstance(case_dict['markers'], list):
-        for marker in case_dict['markers']:
-            if marker.startswith('priority'):
-                return int(marker[-1])
+    # if isinstance(case_dict['markers'], list):
+    #     for marker in case_dict['markers']:
+    #         if marker.startswith('priority'):
+    #             return int(marker[-1])
+    if "|" not in case_dict['title']:
+        return None
+    else:
+        if 'P0' in case_dict['title']:
+            return 0
+        if 'P1' in case_dict['title']:
+            return 1
+        if 'P2' in case_dict['title']:
+            return 2
+
+    return 1
+
+
+def get_priority_for_tapd(case_dict):
+    """
+    tapd-xmind 无法获取图标信息，只能以字段P0，P1，P2标注用例
+    """
+    if "|" not in case_dict['title']:
+        return -1
+    else:
+        if 'P0' in case_dict['title']:
+            return 0
+        if 'P1' in case_dict['title']:
+            return 1
+        if 'P2' in case_dict['title']:
+            return 2
+
+    return 1
 
 
 def gen_testcase_title(topics):
@@ -224,11 +260,21 @@ def parse_a_test_step(step_dict):
     test_step.actions = step_dict['title']
 
     expected_topics = step_dict.get('topics', [])
+
+
     if expected_topics:  # have expected result
         expected_topic = expected_topics[0]
-        test_step.expectedresults = expected_topic['title']  # one test step action, one test expected result
-        markers = expected_topic['markers']
-        test_step.result = get_test_result(markers)
+        # 需要判断后面的节点是预期结果还是备注信息
+        if 'R|' in expected_topic['title']:
+            test_step.remark = expected_topic['title'].split('|')[-1]
+        else:
+            test_step.expectedresults = expected_topic['title']  # one test step action, one test expected result
+            markers = expected_topic['markers']
+            test_step.result = get_test_result(markers)
+            remark = expected_topic.get('topics', [])
+            if remark:
+                re = remark[0]
+                test_step.remark = re['title'].split('|')[-1]
     else:  # only have test step
         markers = step_dict['markers']
         test_step.result = get_test_result(markers)
