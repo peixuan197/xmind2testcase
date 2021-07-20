@@ -30,6 +30,7 @@ def operate():
     elif value.get() == 0:
         messagebox.showwarning(title="提醒",message="请选择一个功能")
     else:
+        file_path = ""
         if value.get() == 1:
             # 转换成excel文件
             file_path = xcase.export_to_excel(path1.get())
@@ -38,7 +39,7 @@ def operate():
             pass
         if platform.system() == 'Darwin':
             # mac 系统
-            os.popen("open " + os.path.dirname(file_path))
+            os.popen("open " + file_path)
             # print(file_path)
         else:
             # window 系统
