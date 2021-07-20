@@ -7,8 +7,9 @@ from tkinter.filedialog import askdirectory
 from tkinter import filedialog
 from tkinter import messagebox
 import xmind2testcase.utils as xcase
+import platform
 
-# def Main():
+# def Main():2
 
 
 def selectFile():
@@ -23,13 +24,25 @@ def printValue():
 
 def operate():
 
+    print(platform.system())
     if path1.get() is None or path1.get() == " ":
         messagebox.showwarning(title="提醒",message="请选择正确的文件路径")
     elif value.get() == 0:
         messagebox.showwarning(title="提醒",message="请选择一个功能")
     else:
-        xls_path = xcase.export_to_excel(path1.get())
-        print(xls_path)
+        if value.get() == 1:
+            # 转换成excel文件
+            file_path = xcase.export_to_excel(path1.get())
+        else:
+            # TODO:提取P0用例
+            pass
+        if platform.system() == 'Darwin':
+            # mac 系统
+            os.popen("open " + os.path.dirname(file_path))
+            # print(file_path)
+        else:
+            # window 系统
+            os.popen("explorer.exe %s" % file_path)
 
 
 if __name__ == '__main__':
