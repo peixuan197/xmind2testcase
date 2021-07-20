@@ -5,7 +5,9 @@ import os
 import xmind
 import logging
 from xmind2testcase.parser import xmind_to_testsuites
-
+import xlwt
+import xlrd
+from tkinter import *
 
 def get_absolute_path(path):
     """
@@ -137,3 +139,102 @@ def xmind_testcase_to_json_file(xmind_file):
         logging.info('Convert XMind file(%s) to a testcase json file(%s) successfully!', xmind_file, testcase_json_file)
 
     return testcase_json_file
+
+
+def export_to_excel(xmind_file):
+    """
+    :param xmind_file: xmind文件
+    :return: 返回excel文件
+    """
+    xmind_file = get_absolute_path(xmind_file)
+    logging.info('Start converting XMind file(%s) to testsuites json file...', xmind_file)
+    testsuites = get_xmind_testsuite_list(xmind_file)
+    first_row = ['模块','前置条件','用例名称','优先级','执行步骤','预期结果','备注']
+
+    # 设置各种样式
+    alignment = xlwt.Alignment()
+    alignment.vert = xlwt.Alignment.VERT_CENTER
+
+    style = xlwt.XFStyle()
+    style.alignment = alignment
+
+    font_first_row = xlwt.Font()
+    # font_first_row.bold = True
+    font_first_row.height = 300
+    font_first_pattert = xlwt.Pattern()
+    font_first_pattert.pattern = xlwt.Pattern.SOLID_PATTERN
+    font_first_pattert.pattern_fore_colour = 21
+
+
+    style_first_row = xlwt.XFStyle()
+    style_first_row.font = font_first_row
+    style_first_row.pattern = font_first_pattert
+
+
+    if testsuites:
+        story = testsuites[0]
+        file_name = story['name']
+        if os.path.exists(file_name + '.xls'):
+            os.remove(file_name + '.xls')
+        workbook = xlwt.Workbook(encoding="utf-8")
+        worksheet = workbook.add_sheet(file_name)
+        for item in first_row:
+            worksheet.write(0,first_row.index(item),item,style_first_row)
+            worksheet.col(first_row.index(item)).width =5000
+        row = 1
+        modle_index = 1
+        case_index = 1
+        step_count = 0
+        modle_count = 0
+        # 记录每列的最大宽度
+        col_width = []
+
+        for model in story['sub_suites']:
+            if len(model['testcase_list']) > 0:
+                for case in (model['testcase_list']):
+                    if len(case['steps']) > 0:
+                        step_count = len(case['steps'])
+                        for index, step in enumerate(case['steps']):
+
+                            worksheet.write(row, 4, str(index + 1) + '、' + step['actions'])
+                            if len(step['expectedresults']) > 0:
+                                worksheet.write(row, 5, str(index + 1) + '、' + step['expectedresults'])
+                            worksheet.write(row, 6, step['remark'])
+
+                            row += 1
+                        # 合并同一个用例的相同部分
+
+                        worksheet.write_merge(case_index, case_index + step_count - 1, 1, 1, case['preconditions'],style)
+                        worksheet.write_merge(case_index, case_index + step_count - 1, 2, 2, case['name'],style)
+                        worksheet.write_merge(case_index, case_index + step_count - 1, 3, 3, case['importance'],style)
+                        case_index += step_count
+                        modle_count += step_count
+
+                    else:
+                        # worksheet.write(row, 0, model['name'])
+                        # step_count += 1
+                        worksheet.write(row, 1, case['preconditions'])
+                        worksheet.write(row, 2, case['name'])
+                        worksheet.write(row, 3, case['importance'])
+                        worksheet.write(row, 6, case['remark'])
+
+                        row = row + 1
+                        case_index += 1
+                        modle_count += 1
+                worksheet.write_merge(modle_index, modle_index + modle_count - 1, 0, 0, model['name'],style)
+                modle_index += modle_count
+                modle_count = 0
+            else:
+                worksheet.write(row, 0, model['name'])
+                row += 1
+                case_index += 1
+
+        workbook.save(os.path.join(os.path.dirname(xmind_file),file_name + '.xls'))
+
+        return os.path.join(os.path.dirname(xmind_file),file_name + '.xls')
+
+
+if __name__ == '__main__':
+    xmind_file = '../docs/test.xmind'
+    export_to_excel(xmind_file)
+

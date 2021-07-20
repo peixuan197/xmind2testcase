@@ -97,6 +97,7 @@ def parse_testsuite(suite_dict):
 
 
 def recurse_parse_testcase(case_dict, parent=None):
+
     if is_testcase_topic(case_dict):
         case = parse_a_testcase(case_dict, parent)
         yield case
@@ -131,18 +132,25 @@ def is_testcase_topic(case_dict):
 
 def parse_a_testcase(case_dict, parent):
     testcase = TestCase()
+    testcase.importance = get_priority_for_tapd(case_dict)
+    if testcase.importance == -1:
+        testcase.importance = 1
+    if '|' in case_dict['title']:
+        case_dict['title'] = case_dict['title'].split('|')[-1]
+
     topics = parent + [case_dict] if parent else [case_dict]
 
     testcase.name = gen_testcase_title(topics)
+    if testcase.name:
 
-    preconditions = gen_testcase_preconditions(topics)
-    testcase.preconditions = preconditions if preconditions else '无'
+        preconditions = (' > ').join(testcase.name.split(" ")[:-1])
+        testcase.name = testcase.name.split(" ")[-1]
+
+        testcase.preconditions = preconditions if preconditions else '无'
 
     summary = gen_testcase_summary(topics)
     testcase.summary = summary if summary else testcase.name
     testcase.execution_type = get_execution_type(topics)
-    testcase.importance = get_priority(case_dict) or 1
-
     step_dict_list = case_dict.get('topics', [])
     if step_dict_list:
         fist_step = step_dict_list[0]

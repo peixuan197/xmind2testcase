@@ -14,7 +14,7 @@ logging.basicConfig(level=logging.INFO)
 
 
 def main():
-    xmind_file = 'docs/xmind_testcase_template_v1.0.xmind'
+    xmind_file = 'docs/test.xmind'
     print('Start to convert XMind file: %s' % xmind_file)
 
     # 1、testcases import file
