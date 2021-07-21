@@ -141,7 +141,7 @@ def xmind_testcase_to_json_file(xmind_file):
     return testcase_json_file
 
 
-def export_to_excel(xmind_file):
+def export_to_excel(xmind_file,type=0):
     """
     :param xmind_file: xmind文件
     :return: 返回excel文件
@@ -192,6 +192,9 @@ def export_to_excel(xmind_file):
         for model in story['sub_suites']:
             if len(model['testcase_list']) > 0:
                 for case in (model['testcase_list']):
+                    # type == 2 只转换P0用例
+                    if type == 2 and case['importance'] > 0:
+                        continue
                     if len(case['steps']) > 0:
                         step_count = len(case['steps'])
                         for index, step in enumerate(case['steps']):
