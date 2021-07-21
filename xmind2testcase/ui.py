@@ -43,7 +43,7 @@ def operate():
             # print(file_path)
         else:
             # window 系统
-            os.popen("explorer.exe %s" % file_path)
+            os.startfile(file_path)
 
 
 if __name__ == '__main__':
@@ -69,8 +69,8 @@ if __name__ == '__main__':
 
     # Label(root,text="选择需要的功能").grid(row=2, column=0, padx=0, pady=0)
     Radiobutton(root, text="转换成Excel", variable=value, value=1).grid(row=4, sticky=W)
-    Radiobutton(root, text="提取P0用例", variable=value, value=2).grid(row=5, sticky=W)
-    Button(root, text="转换", command=operate).grid(row=6, sticky=W)
+    # Radiobutton(root, text="提取P0用例", variable=value, value=2).grid(row=5, sticky=W)
+    Button(root, text="转换", command=operate).grid(row=6, sticky=W, padx=5, pady=5)
     selection = value.get()
     print("Selection:", selection)
 
