@@ -149,7 +149,7 @@ def export_to_excel(xmind_file,type=0):
     xmind_file = get_absolute_path(xmind_file)
     logging.info('Start converting XMind file(%s) to testsuites json file...', xmind_file)
     testsuites = get_xmind_testsuite_list(xmind_file)
-    first_row = ['模块','前置条件','用例名称','优先级','执行步骤','预期结果','备注']
+    first_row = ['模块','前置条件','用例名称','检查点','预期结果','优先级','备注']
 
     # 设置各种样式
     alignment = xlwt.Alignment()
@@ -199,9 +199,10 @@ def export_to_excel(xmind_file,type=0):
                         step_count = len(case['steps'])
                         for index, step in enumerate(case['steps']):
 
-                            worksheet.write(row, 4, str(index + 1) + '、' + step['actions'])
+                            worksheet.write(row, 3, str(index + 1) + '、' + step['actions'].split('|')[-1])
                             if len(step['expectedresults']) > 0:
-                                worksheet.write(row, 5, str(index + 1) + '、' + step['expectedresults'])
+                                worksheet.write(row, 4, str(index + 1) + '、' + step['expectedresults'])
+                            worksheet.write(row, 5, step['priority'])
                             worksheet.write(row, 6, step['remark'])
 
                             row += 1
@@ -209,7 +210,7 @@ def export_to_excel(xmind_file,type=0):
 
                         worksheet.write_merge(case_index, case_index + step_count - 1, 1, 1, case['preconditions'],style)
                         worksheet.write_merge(case_index, case_index + step_count - 1, 2, 2, case['name'],style)
-                        worksheet.write_merge(case_index, case_index + step_count - 1, 3, 3, case['importance'],style)
+                        # worksheet.write_merge(case_index, case_index + step_count - 1, 3, 3, case['importance'],style)
                         case_index += step_count
                         modle_count += step_count
 
@@ -238,6 +239,8 @@ def export_to_excel(xmind_file,type=0):
 
 
 if __name__ == '__main__':
-    xmind_file = '../docs/test.xmind'
+    xmind_file = '../docs/灰度腾讯：新旧插件的兼容处理-randa.xmind'
     export_to_excel(xmind_file)
+    str = "P0|你好啊"
+    print(str.lower())
 

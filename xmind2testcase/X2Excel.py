@@ -32,13 +32,14 @@ def operate():
     else:
         file_path = ""
         file_path = xcase.export_to_excel(path1.get(), value.get())
-        if platform.system() == 'Darwin':
-            # mac 系统
-            os.popen("open " + file_path)
-            # print(file_path)
-        else:
-            # window 系统
-            os.startfile(file_path)
+        os.startfile(file_path)
+        # if platform.system() == 'Darwin':
+        #     # mac 系统
+        #     os.popen("open " + file_path)
+        #     # print(file_path)
+        # else:
+        #     # window 系统
+        #     os.startfile(file_path)
 
 
 if __name__ == '__main__':

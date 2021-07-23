@@ -98,7 +98,7 @@ class TestCase(object):
 
 class TestStep(object):
 
-    def __init__(self, step_number=1, actions='', expectedresults='', execution_type=1, result=0, remark=''):
+    def __init__(self, step_number=1, actions='', expectedresults='', execution_type=1, priority=0, result=0, remark=''):
         """
         TestStep
         :param step_number: test step number
@@ -112,6 +112,7 @@ class TestStep(object):
         self.actions = actions
         self.expectedresults = expectedresults
         self.execution_type = execution_type  # TODO(devin): get execution type content
+        self.priority = priority
         self.result = result
         self.remark = remark
 
@@ -121,6 +122,7 @@ class TestStep(object):
             'actions': self.actions,
             'expectedresults': self.expectedresults,
             'execution_type': self.execution_type,
+            'priority': self.priority,
             'result': self.result,
             'remark': self.remark
         }
