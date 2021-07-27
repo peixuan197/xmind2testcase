@@ -89,26 +89,77 @@ def parse_testsuite(suite_dict):
     logging.debug('start to parse a testsuite: %s', testsuite.name)
 
     for cases_dict in suite_dict.get('topics', []):
-        for case in recurse_parse_testcase(cases_dict):
-            if len(case.steps) > 0 and 'p' in case.steps[0].actions.lower():
-                testsuite.testcase_list.append(case)
+        case_name = ""
+        temp = TestCase()
+        new_case = TestCase()
+        first = 1
+        index = 0
+        cases_iter = list(recurse_parse_testcase(cases_dict))
+        for case in cases_iter:
+            index += 1
+            next_case = transform_case(case)
+            case_name = next_case.name
+            if case_name == temp.name:
+                # 说明2者是同一条用例，则合并
+                new_case = merge_case(temp,next_case)
+                if index == len(cases_iter):
+                    # 最后一条用例，直接加入用例列表中
+                    testsuite.testcase_list.append(new_case)
+            else:
+                # 说明前者是一个完整用例，加入用例集中
+                if first == 1:
+                    # 首个用例不加入列表中
+                    first = 0
+                    temp = next_case
+                    continue
+                testsuite.testcase_list.append(new_case)
+                temp = next_case
+            # if index == len()
 
     logging.debug('testsuite(%s) parsing complete: %s', testsuite.name, testsuite.to_dict())
     return testsuite
 
 
+def merge_case(case1,case2):
+    """
+    合并2条相同的用例
+    """
+    new_case = TestCase()
+    new_case.name = case1.name
+    new_case.importance = case1.importance
+    new_case.preconditions = case1.preconditions
+    new_case.steps = case1.steps + case2.steps
+
+    return new_case
+
+
+def transform_case(case_old):
+    """
+    将解析出来的用例转换成我们需要的格式
+    """
+    case_new = TestCase()
+    if case_old:
+        case_new.name = case_old.preconditions.split(">")[-1].strip()
+        case_new.preconditions = case_old.preconditions
+        case_new.importance = case_old.importance
+        case_new.steps = []
+        tem_step = TestStep()
+        tem_step.actions = case_old.name
+        if case_old.steps and len(case_old.steps) > 0:
+            tem_step.expectedresults = case_old.steps[0].actions
+            tem_step.remark = case_old.steps[0].remark
+            tem_step.priority = case_old.importance
+        case_new.steps.append(tem_step)
+        case_new.remark = case_old.remark
+
+    return case_new
+
+
 def recurse_parse_testcase(case_dict, parent=None):
-    """
-    返回一个case的list
-    """
+
     if is_testcase_topic(case_dict):
-        if len(parent) > 1:
-            case_t = parent[-1]
-            case = parse_a_testcase(case_t, parent)
-            parent.pop()
-            yield case
-
-
+        case = parse_a_testcase(case_dict, parent)
+        yield case
     else:
         if not parent:
             parent = []
@@ -119,7 +170,7 @@ def recurse_parse_testcase(case_dict, parent=None):
             for case in recurse_parse_testcase(child_dict, parent):
                 yield case
 
-        # parent.pop()
+        parent.pop()
 
 
 def is_testcase_topic(case_dict):
@@ -127,11 +178,10 @@ def is_testcase_topic(case_dict):
     # priority = get_priority(case_dict)
     # if priority:
     #     return True
-    # priority = get_priority_for_tapd(case_dict)
-    # if priority != -1:
-    #     return True
-    if len(case_dict.topics) > 0 and 'p' in case_dict.topics[0].title.low():
+    priority = get_priority_for_tapd(case_dict)
+    if priority != -1:
         return True
+
     children = case_dict.get('topics', [])
     if children:
         return False
@@ -141,40 +191,31 @@ def is_testcase_topic(case_dict):
 
 def parse_a_testcase(case_dict, parent):
     testcase = TestCase()
-    """
-    1/如果检查点前有大于1个父节点，则认为前一个节点为用例名称
-    2/如果前面只有1个父节点，则当做模块
-    """
-    # if len(parent) > 1:
-    #     case = parent[-1]
-    # else:
-    #     case = case_dict
-    # testcase.importance = get_priority_for_tapd(case_dict)
-    # 用例优先级默认是 1
-    # if testcase.importance == -1:
-    #     testcase.importance = 1
-    # if '|' in case_dict['title']:
-    #     case_dict['title'] = case_dict['title'].split('|')[-1]
+    testcase.importance = get_priority_for_tapd(case_dict)
+    if testcase.importance == -1:
+        testcase.importance = 1
+    if '|' in case_dict['title']:
+        case_dict['title'] = case_dict['title'].split('|')[-1]
 
-    topics = parent + [case_dict] if parent else '无'
+    topics = parent + [case_dict] if parent else [case_dict]
 
-    # testcase.name = gen_testcase_title(topics)
+    testcase.name = gen_testcase_title(topics)
+    if testcase.name:
 
-    preconditions = gen_testcase_title(topics)
-    testcase.name = case_dict['title']
-    testcase.preconditions = preconditions if preconditions else '无'
+        preconditions = (' > ').join(testcase.name.split(" ")[:-1])
+        testcase.name = testcase.name.split(" ")[-1]
+
+        testcase.preconditions = preconditions if preconditions else '无'
 
     summary = gen_testcase_summary(topics)
     testcase.summary = summary if summary else testcase.name
     testcase.execution_type = get_execution_type(topics)
     step_dict_list = case_dict.get('topics', [])
     if step_dict_list:
-        # 如果后续节点直接是备注，则为用例的备注
         fist_step = step_dict_list[0]
         if 'R|' in fist_step['title']:
             testcase.remark = fist_step['title'].split('|')[-1]
         else:
-            # 如果不是备注则是检查点信息
             testcase.steps = parse_test_steps(step_dict_list)
 
     # the result of the testcase take precedence over the result of the teststep
@@ -192,6 +233,7 @@ def parse_a_testcase(case_dict, parent):
             testcase.result = step.result  # there is no need to judge where test step are ignored
 
     logging.debug('finds a testcase: %s', testcase.to_dict())
+
     return testcase
 
 
@@ -283,9 +325,7 @@ def parse_test_steps(step_dict_list):
 
 def parse_a_test_step(step_dict):
     test_step = TestStep()
-    test_step.priority = get_priority_for_tapd(step_dict)
     test_step.actions = step_dict['title']
-
 
     expected_topics = step_dict.get('topics', [])
 
