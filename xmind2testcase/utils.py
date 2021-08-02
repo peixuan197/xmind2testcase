@@ -49,12 +49,14 @@ def get_xmind_testsuite_list(xmind_file):
     logging.info('Start converting XMind file(%s) to testsuite data list...', xmind_file)
     testsuite_list = get_xmind_testsuites(xmind_file)
     suite_data_list = []
-
+    max_length = 0
     for testsuite in testsuite_list:
         product_statistics = {'case_num': 0, 'non_execution': 0, 'pass': 0, 'failed': 0, 'blocked': 0, 'skipped': 0}
         for sub_suite in testsuite.sub_suites:
             suite_statistics = {'case_num': len(sub_suite.testcase_list), 'non_execution': 0, 'pass': 0, 'failed': 0, 'blocked': 0, 'skipped': 0}
             for case in sub_suite.testcase_list:
+                if len(case.preconditions) > max_length:
+                    max_length = len(case.preconditions)
                 if case.result == 0:
                     suite_statistics['non_execution'] += 1
                 elif case.result == 1:
@@ -76,7 +78,7 @@ def get_xmind_testsuite_list(xmind_file):
         suite_data_list.append(suite_data)
 
     logging.info('Convert XMind file(%s) to testsuite data list successfully!', xmind_file)
-    return suite_data_list
+    return suite_data_list,max_length
 
 
 def get_xmind_testcase_list(xmind_file):
@@ -148,7 +150,8 @@ def export_to_excel(xmind_file,type=0):
     """
     xmind_file = get_absolute_path(xmind_file)
     logging.info('Start converting XMind file(%s) to testsuites json file...', xmind_file)
-    testsuites = get_xmind_testsuite_list(xmind_file)
+    testsuites, max_length = get_xmind_testsuite_list(xmind_file)
+    max_length = max_length - 1
     first_row = ['模块','前置条件','用例名称','检查点','预期结果','优先级','备注']
 
     # 设置各种样式
@@ -178,16 +181,17 @@ def export_to_excel(xmind_file,type=0):
             os.remove(file_name + '.xls')
         workbook = xlwt.Workbook(encoding="utf-8")
         worksheet = workbook.add_sheet(file_name)
-        for item in first_row:
-            worksheet.write(0,first_row.index(item),item,style_first_row)
-            worksheet.col(first_row.index(item)).width =5000
+        for index, item in enumerate(first_row):
+            if index > 1:
+                worksheet.write(0, index + max_length, item, style_first_row)
+                worksheet.col(first_row.index(item)).width =5000
+            else:
+                worksheet.write(0, index, item, style_first_row)
+                worksheet.col(first_row.index(item)).width = 5000
         row = 1
         modle_index = 1
         case_index = 1
-        step_count = 0
         modle_count = 0
-        # 记录每列的最大宽度
-        col_width = []
 
         for model in story['sub_suites']:
             if len(model['testcase_list']) > 0:
@@ -199,17 +203,16 @@ def export_to_excel(xmind_file,type=0):
                         step_count = len(case['steps'])
                         for index, step in enumerate(case['steps']):
 
-                            worksheet.write(row, 3, str(index + 1) + '、' + step['actions'].split('|')[-1])
+                            worksheet.write(row, 3 + max_length, step['actions'].split('|')[-1])
                             if len(step['expectedresults']) > 0:
-                                worksheet.write(row, 4, str(index + 1) + '、' + step['expectedresults'])
-                            worksheet.write(row, 5, step['priority'])
-                            worksheet.write(row, 6, step['remark'])
+                                worksheet.write(row, 4 + max_length, step['expectedresults'])
+                            worksheet.write(row, 5 + max_length, step['priority'])
+                            worksheet.write(row, 6 + max_length, step['remark'])
 
                             row += 1
                         # 合并同一个用例的相同部分
-
                         worksheet.write_merge(case_index, case_index + step_count - 1, 1, 1, case['preconditions'],style)
-                        worksheet.write_merge(case_index, case_index + step_count - 1, 2, 2, case['name'],style)
+                        worksheet.write_merge(case_index, case_index + step_count - 1, 2 + max_length, 2 + max_length, case['name'],style)
                         # worksheet.write_merge(case_index, case_index + step_count - 1, 3, 3, case['importance'],style)
                         case_index += step_count
                         modle_count += step_count
@@ -225,7 +228,10 @@ def export_to_excel(xmind_file,type=0):
                         row = row + 1
                         case_index += 1
                         modle_count += 1
+                # 合并写入模块名称
                 worksheet.write_merge(modle_index, modle_index + modle_count - 1, 0, 0, model['name'],style)
+                # 合并写入前置条件
+
                 modle_index += modle_count
                 modle_count = 0
             else:

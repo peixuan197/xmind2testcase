@@ -139,8 +139,12 @@ def transform_case(case_old):
     """
     case_new = TestCase()
     if case_old:
-        case_new.name = case_old.preconditions.split(">")[-1].strip()
-        case_new.preconditions = case_old.preconditions
+        if len(case_old.preconditions) == 0:
+            # 如果用例没有前置条件，说明他不符合模板规则，则把当前name作为name
+            case_new.name = case_old.name
+        else:
+            case_new.name = case_old.preconditions[-1]
+            case_new.preconditions = case_old.preconditions[:-1]
         case_new.importance = case_old.importance
         case_new.steps = []
         tem_step = TestStep()
@@ -202,10 +206,10 @@ def parse_a_testcase(case_dict, parent):
     testcase.name = gen_testcase_title(topics)
     if testcase.name:
 
-        preconditions = (' > ').join(testcase.name.split(" ")[:-1])
+        preconditions = testcase.name.split(" ")[:-1]
         testcase.name = testcase.name.split(" ")[-1]
 
-        testcase.preconditions = preconditions if preconditions else '无'
+        testcase.preconditions = preconditions if preconditions else []
 
     summary = gen_testcase_summary(topics)
     testcase.summary = summary if summary else testcase.name
@@ -274,7 +278,7 @@ def get_priority_for_tapd(case_dict):
     """
     tapd-xmind 无法获取图标信息，只能以字段P0，P1，P2标注用例
     """
-    if "|" not in case_dict['title']:
+    if "P" not in case_dict['title']:
         return -1
     else:
         if 'P0' in case_dict['title']:
