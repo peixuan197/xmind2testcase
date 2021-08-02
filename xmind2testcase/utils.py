@@ -151,7 +151,7 @@ def export_to_excel(xmind_file,type=0):
     xmind_file = get_absolute_path(xmind_file)
     logging.info('Start converting XMind file(%s) to testsuites json file...', xmind_file)
     testsuites, max_length = get_xmind_testsuite_list(xmind_file)
-    max_length = max_length - 1
+    max_length = 0
     first_row = ['模块','前置条件','用例名称','检查点','预期结果','优先级','备注']
 
     # 设置各种样式
@@ -194,6 +194,7 @@ def export_to_excel(xmind_file,type=0):
         modle_count = 0
 
         for model in story['sub_suites']:
+
             if len(model['testcase_list']) > 0:
                 for case in (model['testcase_list']):
                     # type == 2 只转换P0用例
@@ -218,8 +219,6 @@ def export_to_excel(xmind_file,type=0):
                         modle_count += step_count
 
                     else:
-                        # worksheet.write(row, 0, model['name'])
-                        # step_count += 1
                         worksheet.write(row, 1, case['preconditions'])
                         worksheet.write(row, 2, case['name'])
                         worksheet.write(row, 3, case['importance'])

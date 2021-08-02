@@ -144,7 +144,7 @@ def transform_case(case_old):
             case_new.name = case_old.name
         else:
             case_new.name = case_old.preconditions[-1]
-            case_new.preconditions = case_old.preconditions[:-1]
+            case_new.preconditions = ' > '.join(case_old.preconditions[:-1])
         case_new.importance = case_old.importance
         case_new.steps = []
         tem_step = TestStep()
