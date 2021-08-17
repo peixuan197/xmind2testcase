@@ -105,6 +105,8 @@ def parse_testsuite(suite_dict):
                 if index == len(cases_iter):
                     # 最后一条用例，直接加入用例列表中
                     testsuite.testcase_list.append(new_case)
+
+                temp = new_case
             else:
                 # 说明前者是一个完整用例，加入用例集中
                 if first == 1:
@@ -153,8 +155,11 @@ def transform_case(case_old):
             tem_step.expectedresults = case_old.steps[0].actions
             tem_step.remark = case_old.steps[0].remark
             tem_step.priority = case_old.importance
+        else:
+            tem_step.remark = case_old.remark
+            tem_step.priority = case_old.importance
         case_new.steps.append(tem_step)
-        case_new.remark = case_old.remark
+        # case_new.remark = case_old.remark
 
     return case_new
 

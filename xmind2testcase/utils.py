@@ -197,13 +197,15 @@ def export_to_excel(xmind_file,type=0):
 
             if len(model['testcase_list']) > 0:
                 for case in (model['testcase_list']):
-                    # type == 2 只转换P0用例
-                    if type == 2 and case['importance'] > 0:
-                        continue
+                    # # type == 2 只转换P0用例
+                    # if type == 2 and case['importance'] > 0:
+                    #     continue
                     if len(case['steps']) > 0:
                         step_count = len(case['steps'])
                         for index, step in enumerate(case['steps']):
-
+                            # TODO：只写优先级为0的用例，不太好搞
+                            # if type == 2 and step['priority'] > 0:
+                            #     continue
                             worksheet.write(row, 3 + max_length, step['actions'].split('|')[-1])
                             if len(step['expectedresults']) > 0:
                                 worksheet.write(row, 4 + max_length, step['expectedresults'])
