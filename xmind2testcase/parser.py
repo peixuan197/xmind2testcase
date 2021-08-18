@@ -95,6 +95,7 @@ def parse_testsuite(suite_dict):
         first = 1
         index = 0
         cases_iter = list(recurse_parse_testcase(cases_dict))
+        merge_flag = 0
         for case in cases_iter:
             index += 1
             next_case = transform_case(case)
@@ -102,19 +103,27 @@ def parse_testsuite(suite_dict):
             if case_name == temp.name:
                 # 说明2者是同一条用例，则合并
                 new_case = merge_case(temp,next_case)
+                merge_flag = 1
                 if index == len(cases_iter):
                     # 最后一条用例，直接加入用例列表中
                     testsuite.testcase_list.append(new_case)
 
-                temp = new_case
+                # temp = new_case
             else:
+                # 这个时候还加new_case 还是temp呢？
+
                 # 说明前者是一个完整用例，加入用例集中
                 if first == 1:
                     # 首个用例不加入列表中
                     first = 0
                     temp = next_case
                     continue
-                testsuite.testcase_list.append(new_case)
+                # TODO:如果下一条用例只有1个呢？
+                if merge_flag == 1:
+                    testsuite.testcase_list.append(new_case)
+                    merge_flag = 0
+                else:
+                    testsuite.testcase_list.append(temp)
                 temp = next_case
             # if index == len()
 

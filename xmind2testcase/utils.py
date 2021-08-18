@@ -197,9 +197,6 @@ def export_to_excel(xmind_file,type=0):
 
             if len(model['testcase_list']) > 0:
                 for case in (model['testcase_list']):
-                    # # type == 2 只转换P0用例
-                    # if type == 2 and case['importance'] > 0:
-                    #     continue
                     if len(case['steps']) > 0:
                         step_count = len(case['steps'])
                         for index, step in enumerate(case['steps']):
@@ -246,7 +243,7 @@ def export_to_excel(xmind_file,type=0):
 
 
 if __name__ == '__main__':
-    xmind_file = '../docs/灰度腾讯：新旧插件的兼容处理-randa.xmind'
+    xmind_file = '../docs/test.xmind'
     export_to_excel(xmind_file)
     str = "P0|你好啊"
     print(str.lower())
