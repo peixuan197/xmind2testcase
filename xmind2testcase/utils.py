@@ -243,7 +243,7 @@ def export_to_excel(xmind_file,type=0):
 
 
 if __name__ == '__main__':
-    xmind_file = '../docs/test.xmind'
+    xmind_file = '../docs/灰度腾讯：新旧插件的兼容处理.xmind'
     export_to_excel(xmind_file)
     str = "P0|你好啊"
     print(str.lower())

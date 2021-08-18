@@ -110,20 +110,20 @@ def parse_testsuite(suite_dict):
 
                 # temp = new_case
             else:
-                # 这个时候还加new_case 还是temp呢？
-
-                # 说明前者是一个完整用例，加入用例集中
                 if first == 1:
                     # 首个用例不加入列表中
                     first = 0
                     temp = next_case
                     continue
-                # TODO:如果下一条用例只有1个呢？
+                # 如果用例没有合并过，直接添加temp用例
                 if merge_flag == 1:
                     testsuite.testcase_list.append(new_case)
                     merge_flag = 0
                 else:
                     testsuite.testcase_list.append(temp)
+                if index == len(cases_iter):
+                    # 最后一条用例，直接加入用例列表中
+                    testsuite.testcase_list.append(next_case)
                 temp = next_case
             # if index == len()
 
@@ -158,16 +158,23 @@ def transform_case(case_old):
             case_new.preconditions = ' > '.join(case_old.preconditions[:-1])
         case_new.importance = case_old.importance
         case_new.steps = []
-        tem_step = TestStep()
-        tem_step.actions = case_old.name
+
         if case_old.steps and len(case_old.steps) > 0:
-            tem_step.expectedresults = case_old.steps[0].actions
-            tem_step.remark = case_old.steps[0].remark
-            tem_step.priority = case_old.importance
+            for step in case_old.steps:
+                tem_step = TestStep()
+                tem_step.actions = case_old.name
+                tem_step.expectedresults = tem_step.expectedresults + '\n' + step.actions + step.expectedresults
+                tem_step.remark = step.remark
+                tem_step.priority = case_old.importance
+
+                case_new.steps.append(tem_step)
+
         else:
+            tem_step = TestStep()
+            tem_step.actions = case_old.name
             tem_step.remark = case_old.remark
             tem_step.priority = case_old.importance
-        case_new.steps.append(tem_step)
+            case_new.steps.append(tem_step)
         # case_new.remark = case_old.remark
 
     return case_new
@@ -349,18 +356,27 @@ def parse_a_test_step(step_dict):
 
 
     if expected_topics:  # have expected result
-        expected_topic = expected_topics[0]
-        # 需要判断后面的节点是预期结果还是备注信息
-        if 'R|' in expected_topic['title']:
-            test_step.remark = expected_topic['title'].split('|')[-1]
+        # 只有一条期望的时候
+        if len(expected_topics) == 1:
+            expected_topic = expected_topics[0]
+            # 需要判断后面的节点是预期结果还是备注信息
+            if 'R|' in expected_topic['title']:
+                test_step.remark = expected_topic['title'].split('|')[-1]
+            else:
+                test_step.expectedresults = expected_topic['title']  # one test step action, one test expected result
+                markers = expected_topic['markers']
+                test_step.result = get_test_result(markers)
+                remark = expected_topic.get('topics', [])
+                if remark:
+                    re = remark[0]
+                    test_step.remark = re['title'].split('|')[-1]
         else:
-            test_step.expectedresults = expected_topic['title']  # one test step action, one test expected result
-            markers = expected_topic['markers']
-            test_step.result = get_test_result(markers)
-            remark = expected_topic.get('topics', [])
-            if remark:
-                re = remark[0]
-                test_step.remark = re['title'].split('|')[-1]
+            # 如果有多条期望，合并展示
+            for exp in expected_topics:
+                if 'R|' in exp['title']:
+                    test_step.remark = test_step.remark + '\n' + exp['title'].split('|')[-1]
+                else:
+                    test_step.expectedresults = test_step.expectedresults + '\n' + exp['title']
     else:  # only have test step
         markers = step_dict['markers']
         test_step.result = get_test_result(markers)
