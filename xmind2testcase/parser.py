@@ -111,10 +111,15 @@ def parse_testsuite(suite_dict):
                 temp = new_case
             else:
                 if first == 1:
-                    # 首个用例不加入列表中
-                    first = 0
-                    temp = next_case
-                    continue
+                    if index == len(cases_iter):
+                        # 只有1条用例
+                        testsuite.testcase_list.append(next_case)
+                        continue
+                    else:
+                        # 首个用例不加入列表中
+                        first = 0
+                        temp = next_case
+                        continue
                 # 如果用例没有合并过，直接添加temp用例
                 if merge_flag == 1:
                     testsuite.testcase_list.append(new_case)
