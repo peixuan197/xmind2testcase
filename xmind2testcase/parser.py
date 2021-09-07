@@ -108,7 +108,7 @@ def parse_testsuite(suite_dict):
                     # 最后一条用例，直接加入用例列表中
                     testsuite.testcase_list.append(new_case)
 
-                # temp = new_case
+                temp = new_case
             else:
                 if first == 1:
                     # 首个用例不加入列表中
@@ -285,11 +285,11 @@ def get_priority(case_dict):
     if "|" not in case_dict['title']:
         return None
     else:
-        if 'P0' in case_dict['title']:
+        if 'p0' in case_dict['title'].lower():
             return 0
-        if 'P1' in case_dict['title']:
+        if 'p1' in case_dict['title'].lower():
             return 1
-        if 'P2' in case_dict['title']:
+        if 'p2' in case_dict['title'].lower():
             return 2
 
     return 1
@@ -299,15 +299,14 @@ def get_priority_for_tapd(case_dict):
     """
     tapd-xmind 无法获取图标信息，只能以字段P0，P1，P2标注用例
     """
-    if "P" not in case_dict['title']:
-        return -1
+    if 'p0' in case_dict['title'].lower():
+        return 0
+    elif 'p1' in case_dict['title'].lower():
+        return 1
+    elif 'p2' in case_dict['title'].lower():
+        return 2
     else:
-        if 'P0' in case_dict['title']:
-            return 0
-        if 'P1' in case_dict['title']:
-            return 1
-        if 'P2' in case_dict['title']:
-            return 2
+        return -1
 
     return 1
 
